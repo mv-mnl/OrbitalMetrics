@@ -1,11 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const si = require('systeminformation');
+const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+app.use(express.json()); // For parsing json if needed
 
 const path = require('path');
 
@@ -16,6 +18,55 @@ app.get('/health', (req, res) => {
 
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, 'public')));
+
+// --- Docker UNIX Socket API Helper ---
+function dockerRequest(method, path, res) {
+    const options = {
+        socketPath: '/var/run/docker.sock',
+        path: path,
+        method: method
+    };
+    const req = http.request(options, (response) => {
+        let body = [];
+        response.on('data', chunk => body.push(chunk));
+        response.on('end', () => {
+            let fullBody = Buffer.concat(body);
+            if (path.includes('/logs')) {
+                // Parse multiplexed stream (8-byte header per frame)
+                let logs = '';
+                let offset = 0;
+                while (offset < fullBody.length) {
+                    if (offset + 8 > fullBody.length) break;
+                    let type = fullBody.readUInt8(offset); // 1 = stdout, 2 = stderr
+                    let length = fullBody.readUInt32BE(offset + 4);
+                    offset += 8;
+                    if (offset + length > fullBody.length) break;
+                    logs += fullBody.toString('utf8', offset, offset + length);
+                    offset += length;
+                }
+                res.status(response.statusCode).send(logs);
+            } else {
+                res.status(response.statusCode).send(fullBody.toString('utf8'));
+            }
+        });
+    });
+    req.on('error', err => res.status(500).json({ error: err.message }));
+    req.end();
+}
+
+app.post('/api/docker/:id/restart', (req, res) => {
+    dockerRequest('POST', `/containers/${req.params.id}/restart`, res);
+});
+
+app.post('/api/docker/:id/stop', (req, res) => {
+    dockerRequest('POST', `/containers/${req.params.id}/stop`, res);
+});
+
+app.get('/api/docker/:id/logs', (req, res) => {
+    // 20 lines of logs
+    dockerRequest('GET', `/containers/${req.params.id}/logs?stdout=true&stderr=true&tail=20`, res);
+});
+// -------------------------------------
 
 // SSE Endpoint for metrics
 app.get('/api/metrics', (req, res) => {
@@ -28,14 +79,16 @@ app.get('/api/metrics', (req, res) => {
 
     const intervalId = setInterval(async () => {
         try {
-            const [cpu, mem, disk, time, network, os, docker] = await Promise.all([
+            const [cpu, mem, disk, time, network, os, docker, temp, dockerStats] = await Promise.all([
                 si.currentLoad(),
                 si.mem(),
                 si.fsSize(),
                 si.time(),
                 si.networkStats(),
                 si.osInfo(),
-                si.dockerContainers('all').catch(() => []) // Catch error if docker is not accessible
+                si.dockerContainers('all').catch(() => []), // Catch error if docker is not accessible
+                si.cpuTemperature().catch(() => ({ main: null })),
+                si.dockerContainerStats('*').catch(() => [])
             ]);
 
             const data = {
@@ -68,13 +121,19 @@ app.get('/api/metrics', (req, res) => {
                     release: os.release,
                     kernel: os.kernel
                 },
-                docker: docker.map(d => ({
-                    id: d.id,
-                    name: d.name,
-                    image: d.image,
-                    state: d.state,
-                    status: d.status
-                }))
+                temperature: temp.main,
+                docker: docker.map(d => {
+                    const stats = dockerStats.find(s => s.id === d.id);
+                    return {
+                        id: d.id,
+                        name: d.name,
+                        image: d.image,
+                        state: d.state,
+                        status: d.status,
+                        cpuPercent: stats ? stats.cpuPercent : 0,
+                        memPercent: stats ? stats.memPercent : 0
+                    };
+                })
             };
 
             res.write(`data: ${JSON.stringify(data)}\n\n`);

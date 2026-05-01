@@ -383,6 +383,96 @@ footer {
   padding-top: 2rem;
 }
 
+/* Temperature Badge */
+.temperature-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  color: var(--warning);
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+.temperature-badge .icon { font-size: 1.1rem; }
+
+/* Docker Actions & Stats */
+.docker-stats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.3rem;
+}
+.docker-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+.docker-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.docker-btn:hover { background: rgba(255, 255, 255, 0.15); }
+.docker-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.docker-btn.restart:hover { background: rgba(59, 130, 246, 0.3); border-color: var(--primary); }
+.docker-btn.stop:hover { background: rgba(239, 68, 68, 0.3); border-color: var(--danger); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.modal-body {
+  flex-grow: 1;
+  overflow-y: auto;
+  background: #000;
+  border-radius: 8px;
+  padding: 1rem;
+}
+#logs-output {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #a7f3d0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 /* Responsiveness */
 @media (max-width: 768px) {
   .header-content {
