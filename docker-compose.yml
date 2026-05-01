@@ -10,6 +10,7 @@ services:
       - /proc:/proc:ro
       - /sys:/sys:ro
       - /dev:/dev:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
 
   cloudflared_orbitalmetrics:

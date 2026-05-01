@@ -28,13 +28,14 @@ app.get('/api/metrics', (req, res) => {
 
     const intervalId = setInterval(async () => {
         try {
-            const [cpu, mem, disk, time, network, os] = await Promise.all([
+            const [cpu, mem, disk, time, network, os, docker] = await Promise.all([
                 si.currentLoad(),
                 si.mem(),
                 si.fsSize(),
                 si.time(),
                 si.networkStats(),
-                si.osInfo()
+                si.osInfo(),
+                si.dockerContainers('all').catch(() => []) // Catch error if docker is not accessible
             ]);
 
             const data = {
@@ -66,7 +67,14 @@ app.get('/api/metrics', (req, res) => {
                     distro: os.distro,
                     release: os.release,
                     kernel: os.kernel
-                }
+                },
+                docker: docker.map(d => ({
+                    id: d.id,
+                    name: d.name,
+                    image: d.image,
+                    state: d.state,
+                    status: d.status
+                }))
             };
 
             res.write(`data: ${JSON.stringify(data)}\n\n`);

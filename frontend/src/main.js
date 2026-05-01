@@ -142,6 +142,33 @@ function updateDashboard(data) {
         netRx.textContent = formatBytes(totalRx) + '/s';
         netTx.textContent = formatBytes(totalTx) + '/s';
     }
+
+    // Docker Containers
+    const dockerList = document.getElementById('docker-list');
+    if (data.docker && dockerList) {
+        if (data.docker.length === 0) {
+            dockerList.innerHTML = '<div class="docker-placeholder">No containers found</div>';
+        } else {
+            dockerList.innerHTML = data.docker.map(c => {
+                const stateClass = c.state === 'running' ? 'running' : (c.state === 'exited' ? 'exited' : 'paused');
+                return `
+                <div class="docker-item">
+                    <div class="docker-info">
+                        <span class="docker-name">${c.name}</span>
+                        <span class="docker-image">${c.image}</span>
+                    </div>
+                    <div class="docker-status-col">
+                        <span class="docker-state ${stateClass}">
+                            <span class="dot"></span>
+                            ${c.state.toUpperCase()}
+                        </span>
+                        <span class="docker-status-text">${c.status}</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+    }
 }
 
 // Initialize
