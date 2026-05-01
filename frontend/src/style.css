@@ -473,6 +473,117 @@ footer {
   word-wrap: break-word;
 }
 
+/* Clickable cards */
+.glass-card.clickable {
+  cursor: pointer;
+  position: relative;
+}
+.glass-card.clickable::after {
+  content: 'Ver detalles →';
+  position: absolute;
+  bottom: 1rem;
+  right: 1.2rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.glass-card.clickable:hover::after {
+  opacity: 1;
+}
+.glass-card.clickable:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+/* Detail modal */
+.detail-modal-content {
+  max-height: 85vh;
+  gap: 0;
+}
+.detail-modal-body {
+  overflow-y: auto;
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.detail-modal-body::-webkit-scrollbar { width: 6px; }
+.detail-modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 4px; }
+.detail-modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.detail-section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 0.4rem;
+}
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  padding: 0.3rem 0;
+}
+.detail-row .label { color: var(--text-muted); }
+.detail-row .value { font-weight: 600; }
+.detail-cores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.6rem;
+}
+.detail-core-item {
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.detail-core-item .core-label {
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+  font-size: 0.75rem;
+}
+.detail-core-bar-bg {
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  height: 5px;
+  margin-top: 0.3rem;
+}
+.detail-core-bar {
+  height: 5px;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.detail-disk-partition {
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.detail-disk-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+.detail-disk-header .mount { font-weight: 600; }
+.detail-disk-header .fs { font-size: 0.75rem; color: var(--text-muted); }
+.detail-mem-bar-row {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+  gap: 2px;
+}
+
 /* Responsiveness */
 @media (max-width: 768px) {
   .header-content {

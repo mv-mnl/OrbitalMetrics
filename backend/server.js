@@ -79,37 +79,64 @@ app.get('/api/metrics', (req, res) => {
 
     const intervalId = setInterval(async () => {
         try {
-            const [cpu, mem, disk, time, network, os, docker, temp, dockerStats] = await Promise.all([
+            const [cpu, mem, disk, time, network, os, docker, temp, dockerStats, cpuInfo] = await Promise.all([
                 si.currentLoad(),
                 si.mem(),
                 si.fsSize(),
                 si.time(),
                 si.networkStats(),
                 si.osInfo(),
-                si.dockerContainers('all').catch(() => []), // Catch error if docker is not accessible
-                si.cpuTemperature().catch(() => ({ main: null })),
-                si.dockerContainerStats('*').catch(() => [])
+                si.dockerContainers('all').catch(() => []),
+                si.cpuTemperature().catch(() => ({ main: null, cores: [] })),
+                si.dockerContainerStats('*').catch(() => []),
+                si.cpu().catch(() => ({}))
             ]);
 
             const data = {
                 cpu: {
                     load: cpu.currentLoad.toFixed(2),
-                    cores: cpu.cpus.map(c => c.load.toFixed(2))
+                    cores: cpu.cpus.map((c, i) => ({
+                        load: c.load.toFixed(2),
+                        speed: c.speed || null
+                    })),
+                    // Detailed CPU info
+                    model: cpuInfo.brand || 'Unknown',
+                    manufacturer: cpuInfo.manufacturer || '',
+                    physicalCores: cpuInfo.physicalCores || 0,
+                    logicalCores: cpuInfo.cores || 0,
+                    speed: cpuInfo.speed || 0,
+                    speedMin: cpuInfo.speedMin || 0,
+                    speedMax: cpuInfo.speedMax || 0,
+                    socket: cpuInfo.socket || '',
+                    cache: cpuInfo.cache || {},
+                    // Temperature per core if available
+                    tempMain: temp.main,
+                    tempCores: temp.cores || []
                 },
                 memory: {
                     total: mem.total,
                     used: mem.active,
                     free: mem.available,
-                    percent: ((mem.active / mem.total) * 100).toFixed(2)
+                    percent: ((mem.active / mem.total) * 100).toFixed(2),
+                    // Detailed memory
+                    cached: mem.cached,
+                    buffers: mem.buffers,
+                    slab: mem.slab,
+                    swapTotal: mem.swaptotal,
+                    swapUsed: mem.swapused,
+                    swapFree: mem.swapfree
                 },
-                disk: disk.map(d => ({
-                    fs: d.fs,
-                    size: d.size,
-                    used: d.used,
-                    use: d.use.toFixed(2),
-                    mount: d.mount
-                })).filter(d => d.mount === '/' || d.mount.startsWith('/boot')), // Filter out loop/snap
-                uptime: time.uptime, // in seconds
+                disk: disk
+                    .filter(d => !d.fs.startsWith('loop') && !d.fs.startsWith('tmpfs') && !d.fs.startsWith('udev'))
+                    .map(d => ({
+                        fs: d.fs,
+                        type: d.type,
+                        size: d.size,
+                        used: d.used,
+                        use: d.use ? d.use.toFixed(2) : '0',
+                        mount: d.mount
+                    })),
+                uptime: time.uptime,
                 network: network.map(n => ({
                     iface: n.iface,
                     rx_sec: n.rx_sec,
@@ -119,7 +146,9 @@ app.get('/api/metrics', (req, res) => {
                     hostname: os.hostname,
                     distro: os.distro,
                     release: os.release,
-                    kernel: os.kernel
+                    kernel: os.kernel,
+                    arch: os.arch,
+                    platform: os.platform
                 },
                 temperature: temp.main,
                 docker: docker.map(d => {
