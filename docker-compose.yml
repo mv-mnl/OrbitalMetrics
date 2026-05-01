@@ -14,7 +14,7 @@ services:
       - /dev:/dev:ro
     restart: unless-stopped
 
-  cloudflared:
+  cloudflared_orbitalmetrics:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared-tunnel
     network_mode: "host"
