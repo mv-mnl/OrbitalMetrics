@@ -7,9 +7,16 @@ services:
     network_mode: "host" # Required to see host network stats
     pid: "host"          # Required to see host processes and true CPU/RAM
     environment:
-      - PORT=8080
+      - PORT=${PORT:-8081}
     volumes:
       - /proc:/proc:ro
       - /sys:/sys:ro
       - /dev:/dev:ro
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-tunnel
+    network_mode: "host"
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_API_TOKEN}
     restart: unless-stopped
