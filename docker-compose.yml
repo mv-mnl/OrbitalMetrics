@@ -14,7 +14,7 @@ services:
 
   cloudflared_orbitalmetrics:
     image: cloudflare/cloudflared:latest
-    container_name: cloudflared-tunnel
+    container_name: cloudflared-tunnel-orbital
     network_mode: "host"
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_API_TOKEN}
     restart: unless-stopped
