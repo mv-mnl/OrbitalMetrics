@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build: .
+    container_name: ubuntu-monitor
+    network_mode: "host" # Required to see host network stats
+    pid: "host"          # Required to see host processes and true CPU/RAM
+    environment:
+      - PORT=8080
+    volumes:
+      - /proc:/proc:ro
+      - /sys:/sys:ro
+      - /dev:/dev:ro
+    restart: unless-stopped

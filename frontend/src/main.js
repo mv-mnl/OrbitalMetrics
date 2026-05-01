@@ -1,0 +1,148 @@
+// Utility to format bytes
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+// Utility to format time
+function formatUptime(seconds) {
+    const d = Math.floor(seconds / (3600*24));
+    const h = Math.floor(seconds % (3600*24) / 3600);
+    const m = Math.floor(seconds % 3600 / 60);
+    
+    let res = '';
+    if (d > 0) res += d + 'd ';
+    if (h > 0) res += h + 'h ';
+    res += m + 'm';
+    return res;
+}
+
+// Determine color based on percentage
+function getColorForPercentage(pct) {
+    if (pct < 60) return 'linear-gradient(90deg, #3b82f6, #60a5fa)'; // Blue
+    if (pct < 85) return 'linear-gradient(90deg, #f59e0b, #fbbf24)'; // Warning/Yellow
+    return 'linear-gradient(90deg, #ef4444, #f87171)'; // Danger/Red
+}
+
+// DOM Elements
+const connStatus = document.getElementById('conn-status');
+const connStatusText = connStatus.querySelector('span:nth-child(2)');
+const sysInfo = document.getElementById('sys-info');
+
+const cpuLoad = document.getElementById('cpu-load');
+const cpuBar = document.getElementById('cpu-bar');
+const cpuCores = document.getElementById('cpu-cores');
+
+const memPercent = document.getElementById('mem-percent');
+const memBar = document.getElementById('mem-bar');
+const memUsed = document.getElementById('mem-used');
+const memTotal = document.getElementById('mem-total');
+
+const diskPercent = document.getElementById('disk-percent');
+const diskBar = document.getElementById('disk-bar');
+const diskUsed = document.getElementById('disk-used');
+const diskTotal = document.getElementById('disk-total');
+
+const netRx = document.getElementById('net-rx');
+const netTx = document.getElementById('net-tx');
+
+const uptimeEl = document.getElementById('uptime');
+
+// Connect to SSE
+function connect() {
+    // In production, this might be a relative URL if served from the same host
+    // In Vite dev mode, we proxy /api to localhost:3000
+    const evtSource = new EventSource('/api/metrics');
+
+    evtSource.onopen = () => {
+        connStatus.classList.remove('disconnected');
+        connStatusText.textContent = 'Connected';
+    };
+
+    evtSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.message === 'connected') return;
+        
+        updateDashboard(data);
+    };
+
+    evtSource.onerror = (err) => {
+        connStatus.classList.add('disconnected');
+        connStatusText.textContent = 'Disconnected - Retrying...';
+        evtSource.close();
+        setTimeout(connect, 3000); // Try to reconnect after 3 seconds
+    };
+}
+
+function updateDashboard(data) {
+    // OS Info
+    if (data.os) {
+        sysInfo.textContent = `${data.os.distro} ${data.os.release} • ${data.os.kernel} • Host: ${data.os.hostname}`;
+    }
+
+    // Uptime
+    if (data.uptime) {
+        uptimeEl.textContent = formatUptime(data.uptime);
+    }
+
+    // CPU
+    if (data.cpu) {
+        const load = parseFloat(data.cpu.load);
+        cpuLoad.textContent = Math.round(load);
+        cpuBar.style.width = `${load}%`;
+        cpuBar.style.background = getColorForPercentage(load);
+
+        // Cores
+        if (data.cpu.cores) {
+            cpuCores.innerHTML = data.cpu.cores.map((c, i) => 
+                `<div class="core">C${i}: ${Math.round(c)}%</div>`
+            ).join('');
+        }
+    }
+
+    // Memory
+    if (data.memory) {
+        const pct = parseFloat(data.memory.percent);
+        memPercent.textContent = Math.round(pct);
+        memBar.style.width = `${pct}%`;
+        memBar.style.background = getColorForPercentage(pct);
+        
+        memUsed.textContent = formatBytes(data.memory.used);
+        memTotal.textContent = formatBytes(data.memory.total);
+    }
+
+    // Disk
+    if (data.disk && data.disk.length > 0) {
+        // Find main disk (usually /)
+        const mainDisk = data.disk.find(d => d.mount === '/') || data.disk[0];
+        const pct = parseFloat(mainDisk.use);
+        
+        diskPercent.textContent = Math.round(pct);
+        diskBar.style.width = `${pct}%`;
+        diskBar.style.background = getColorForPercentage(pct);
+        
+        diskUsed.textContent = formatBytes(mainDisk.used);
+        diskTotal.textContent = formatBytes(mainDisk.size);
+    }
+
+    // Network
+    if (data.network && data.network.length > 0) {
+        // Aggregate all active interfaces
+        let totalRx = 0;
+        let totalTx = 0;
+        data.network.forEach(n => {
+            totalRx += (n.rx_sec || 0);
+            totalTx += (n.tx_sec || 0);
+        });
+
+        netRx.textContent = formatBytes(totalRx) + '/s';
+        netTx.textContent = formatBytes(totalTx) + '/s';
+    }
+}
+
+// Initialize
+connect();

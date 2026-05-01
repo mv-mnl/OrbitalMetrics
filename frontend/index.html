@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Server Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./src/style.css">
+  </head>
+  <body>
+    <div class="background-effects">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
+    <div class="app-container">
+      <header>
+        <div class="header-content">
+          <h1>Ubuntu Monitor</h1>
+          <div class="status-badge" id="conn-status">
+            <span class="dot pulse"></span>
+            <span>Connecting...</span>
+          </div>
+        </div>
+        <div class="system-info" id="sys-info">
+          Loading system data...
+        </div>
+      </header>
+
+      <main class="dashboard-grid">
+        <!-- CPU Card -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h2>CPU Load</h2>
+            <span class="icon">⚡</span>
+          </div>
+          <div class="card-body">
+            <div class="main-metric">
+              <span id="cpu-load">0</span><span class="unit">%</span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar" id="cpu-bar" style="width: 0%"></div>
+            </div>
+            <div class="details" id="cpu-cores">
+              <!-- Cores will be injected here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Memory Card -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h2>Memory</h2>
+            <span class="icon">🧠</span>
+          </div>
+          <div class="card-body">
+            <div class="main-metric">
+              <span id="mem-percent">0</span><span class="unit">%</span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar" id="mem-bar" style="width: 0%"></div>
+            </div>
+            <div class="details">
+              <span id="mem-used">0 GB</span> / <span id="mem-total">0 GB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Disk Card -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h2>Storage (/)</h2>
+            <span class="icon">💾</span>
+          </div>
+          <div class="card-body">
+            <div class="main-metric">
+              <span id="disk-percent">0</span><span class="unit">%</span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar" id="disk-bar" style="width: 0%"></div>
+            </div>
+            <div class="details">
+              <span id="disk-used">0 GB</span> / <span id="disk-total">0 GB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Network Card -->
+        <div class="glass-card network-card">
+          <div class="card-header">
+            <h2>Network Traffic</h2>
+            <span class="icon">🌐</span>
+          </div>
+          <div class="card-body">
+            <div class="network-stats">
+              <div class="stat-box down">
+                <span class="label">↓ Download</span>
+                <span class="value" id="net-rx">0 KB/s</span>
+              </div>
+              <div class="stat-box up">
+                <span class="label">↑ Upload</span>
+                <span class="value" id="net-tx">0 KB/s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+      
+      <footer>
+        Uptime: <span id="uptime">0h 0m</span>
+      </footer>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
